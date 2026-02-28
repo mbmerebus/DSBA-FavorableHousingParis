@@ -12,12 +12,14 @@ Here are some examples of visuals produced for this project:
 
 ![commute](./visuals/paris_commute_map.png)
 
-
 ### Our Goal
 
 As DSBA students, our goal is to help our student peers (regardless of their school and track) to find the right place to rent for their studies in and around Paris. Our motive is, if we had to start scholarship again, where would we want to live so we don't get home tired and pressured by expanses.
 
 ### Dataset used
+
+* Logement - Encadrement des Loyers, OpenData Paris: https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers/information/?utm_source=chatgpt.com&disjunctive.nom_quartier&disjunctive.piece&disjunctive.epoque&disjunctive.meuble_txt&disjunctive.id_zone&disjunctive.annee&sort=-id_quartier
+* Calculateur Ile-de-France - Isochrone v2: https://prim.iledefrance-mobilites.fr/fr/apis/idfm-navitia-isochrones-v2
 
 ## Project structure
 
