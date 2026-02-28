@@ -3,6 +3,16 @@ __pycache__/
 *.py[codz]
 *$py.class
 
+# GeoData
+*.geojson
+
+#MacOS
+.DS_Store
+
+#Other
+*.csv
+*.kml
+
 # C extensions
 *.so
 
