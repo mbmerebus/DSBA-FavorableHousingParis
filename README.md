@@ -8,13 +8,13 @@ Repository for MSc DSBA Data Vizualisation course. Topic is the definition of di
 
 Here are some examples of visuals produced for this project:
 
-<img src="./visuals/paris_rent_map.png" width="400">
+<img src="./visuals/paris_rent_map.png" width="500">
 
-<img src="./visuals/paris_furnished_map.png" width="350">
+<img src="./visuals/paris_furnished_map.png" width="500">
 
-<img src="./visuals/paris_commute_map.png" width="400">
+<img src="./visuals/paris_commute_map.png" width="500">
 
-<img src="./visuals/paris_combined_score_map.png" width="400">
+<img src="./visuals/paris_combined_score_map.png" width="500">
 
 ### Our Goal
 
