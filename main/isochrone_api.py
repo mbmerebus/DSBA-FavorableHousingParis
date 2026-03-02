@@ -6,7 +6,7 @@ from datetime import datetime
 def call_API(TIME_STUDIED, NAVITIA_TOKEN, start_lon, start_lat):
     # --- Config ---
     MAX_DURATION = TIME_STUDIED*60        # time in minutes converted to seconds
-    CACHE_FILE = f"isochrone_paris_{TIME_STUDIED}min.json"
+    CACHE_FILE = f"../isochrone/isochrone_paris_{TIME_STUDIED}min.json"
 
     # --- Call the API (only if cache doesn't exist) ---
     if os.path.exists(CACHE_FILE):
