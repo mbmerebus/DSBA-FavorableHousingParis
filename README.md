@@ -25,10 +25,17 @@ As DSBA students, our goal is to help our student peers (regardless of their sch
 * Logement - Encadrement des Loyers, OpenData Paris: [https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers/information/?utm_source=chatgpt.com&amp;disjunctive.nom_quartier&amp;disjunctive.piece&amp;disjunctive.epoque&amp;disjunctive.meuble_txt&amp;disjunctive.id_zone&amp;disjunctive.annee&amp;sort=-id_quartier](https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers/information/?utm_source=chatgpt.com&disjunctive.nom_quartier&disjunctive.piece&disjunctive.epoque&disjunctive.meuble_txt&disjunctive.id_zone&disjunctive.annee&sort=-id_quartier)
 * Calculateur Ile-de-France - Isochrone v2: [https://prim.iledefrance-mobilites.fr/fr/apis/idfm-navitia-isochrones-v2](https://prim.iledefrance-mobilites.fr/fr/apis/idfm-navitia-isochrones-v2)
 
+### Other resources used
+- Altair python package for vizualisation
+- Geopandas package for geo data handling
+- Claude AI for rapid prototyping
+
 ### Authors
 
 - Marta SHKRELI
 - Matteo COUCHOUD
+
+
 
 ## User Manual
 
