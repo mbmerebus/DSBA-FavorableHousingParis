@@ -5,6 +5,7 @@ Run:  streamlit run dashboard.py
 """
 
 import streamlit as st
+import streamlit.components.v1 as components
 import geopandas as gpd
 import pandas as pd
 import altair as alt
@@ -76,7 +77,6 @@ def load_data():
 
         sorted_durations = sorted(isochrone_polygons.keys())
 
-        # Assign commute time
         centroids = paris_zones.to_crs(epsg=3857).centroid.to_crs(epsg=4326)
 
         def get_commute(c):
@@ -205,8 +205,7 @@ if len(filtered) == 0:
     st.warning("No zones match the current filters. Try adjusting the sidebar.")
     st.stop()
 
-# --- Aggregate to one row per neighborhood ---
-# This reduces ~5000 rows to ~80, making the map small enough for Altair/Vega-Lite
+# Aggregate to one row per neighborhood (~80 rows instead of ~5000)
 map_data = filtered.groupby("id_quartier", as_index=False).agg(
     nom_quartier=("nom_quartier", "first"),
     geometry=("geometry", "first"),
@@ -214,16 +213,7 @@ map_data = filtered.groupby("id_quartier", as_index=False).agg(
     ref=("ref", "mean"),
 )
 map_data = gpd.GeoDataFrame(map_data, geometry="geometry", crs="EPSG:4326")
-
-# Simplify geometry slightly for faster rendering
 map_data["geometry"] = map_data["geometry"].simplify(tolerance=0.0001, preserve_topology=True)
-
-# Let user pick what to colour the map by
-map_colour = st.radio(
-    "Colour map by:",
-    ["Rent (€/m²)", "Commute time (min)", "Combined score"],
-    horizontal=True,
-)
 
 # Compute combined score
 ref_min = map_data["ref"].min()
@@ -231,122 +221,91 @@ ref_max = map_data["ref"].max()
 if ref_max > ref_min:
     map_data["rent_score"] = (map_data["ref"] - ref_min) / (ref_max - ref_min)
 else:
-    map_data["rent_score"] = 0
+    map_data["rent_score"] = 0.0
 
 if sorted_durations:
-    dur_min = sorted_durations[0]
-    dur_max = sorted_durations[-1]
+    dur_min, dur_max = sorted_durations[0], sorted_durations[-1]
     map_data["commute_score"] = map_data["commute_minutes"].apply(
         lambda m: 1.0 if pd.isna(m) else (m - dur_min) / (dur_max - dur_min) if dur_max > dur_min else 0
     )
 else:
-    map_data["commute_score"] = 0
+    map_data["commute_score"] = 0.0
 
-map_data["combined_score"] = (map_data["rent_score"] + map_data["commute_score"]) / 2
-
-# Round for cleaner tooltips
+map_data["combined_score"] = ((map_data["rent_score"] + map_data["commute_score"]) / 2).round(3)
 map_data["ref"] = map_data["ref"].round(1)
-map_data["combined_score"] = map_data["combined_score"].round(3)
 
-# Build GeoJSON for Altair — use features list directly
-# alt.InlineData gets stripped by Streamlit's Vega-Lite theme processing
+# Colour selector
+map_colour = st.radio(
+    "Colour map by:",
+    ["Rent (€/m²)", "Commute time (min)", "Combined score"],
+    horizontal=True,
+)
+
+# Build Altair chart (same approach as the notebook)
 display_df = map_data.drop(columns=["centroid"], errors="ignore")
-features = display_df.__geo_interface__["features"]
+geojson_data = alt.InlineData(
+    values=display_df.__geo_interface__,
+    format=alt.DataFormat(property="features", type="json"),
+)
 
 if map_colour == "Rent (€/m²)":
-    color_field = "properties.ref"
-    color_type = "quantitative"
-    color_scale = {"scheme": "redyellowgreen", "reverse": True}
-    legend_title = "Rent (€/m²)"
+    colour_enc = alt.Color(
+        "properties.ref:Q",
+        scale=alt.Scale(scheme="redyellowgreen", reverse=True),
+        legend=alt.Legend(title="Rent (€/m²)"),
+    )
 elif map_colour == "Commute time (min)":
-    color_field = "properties.commute_minutes"
-    color_type = "ordinal"
-    color_scale = {
-        "domain": sorted_durations,
-        "range": ["#60e309", "#ecf312", "#ffd900", "#ff6518"][: len(sorted_durations)],
-    }
-    legend_title = "Commute (min)"
+    colour_enc = alt.Color(
+        "properties.commute_minutes:O",
+        scale=alt.Scale(
+            domain=sorted_durations,
+            range=["#60e309", "#ecf312", "#ffd900", "#ff6518"][: len(sorted_durations)],
+        ),
+        legend=alt.Legend(title="Commute (min)"),
+    )
 else:
-    color_field = "properties.combined_score"
-    color_type = "quantitative"
-    color_scale = {"scheme": "redyellowgreen", "reverse": True, "domain": [0, 1]}
-    legend_title = "Score (0=best)"
+    colour_enc = alt.Color(
+        "properties.combined_score:Q",
+        scale=alt.Scale(scheme="redyellowgreen", reverse=True, domain=[0, 1]),
+        legend=alt.Legend(title="Score (0=best)"),
+    )
 
-# Build Vega-Lite spec directly — avoids Streamlit stripping inline data
-vega_spec = {
-    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
-    "width": 750,
-    "height": 550,
-    "projection": {"type": "mercator"},
-    "layer": [
-        {
-            "data": {
-                "values": features,
-                "format": {"property": "geometry", "type": "json"},
-            },
-            "mark": {"type": "geoshape", "stroke": "white", "strokeWidth": 0.5},
-            "encoding": {
-                "color": {
-                    "field": color_field,
-                    "type": color_type,
-                    "scale": color_scale,
-                    "legend": {"title": legend_title},
-                },
-                "tooltip": [
-                    {"field": "properties.nom_quartier", "type": "nominal", "title": "Neighborhood"},
-                    {"field": "properties.ref", "type": "quantitative", "title": "Avg Rent (€/m²)"},
-                    {"field": "properties.commute_minutes", "type": "quantitative", "title": "Commute (min)"},
-                    {"field": "properties.combined_score", "type": "quantitative", "title": "Combined Score"},
-                ],
-            },
-        },
-        {
-            "data": {"values": [{"lon": CAMPUS_LON, "lat": CAMPUS_LAT}]},
-            "mark": {"type": "point", "color": "red", "size": 120, "shape": "cross", "filled": True},
-            "encoding": {
-                "longitude": {"field": "lon", "type": "quantitative"},
-                "latitude": {"field": "lat", "type": "quantitative"},
-            },
-        },
-        {
-            "data": {"values": [{"lon": CAMPUS_LON, "lat": CAMPUS_LAT, "name": CAMPUS_NAME}]},
-            "mark": {"type": "text", "dy": -12, "fontSize": 11, "fontWeight": "bold", "color": "black"},
-            "encoding": {
-                "longitude": {"field": "lon", "type": "quantitative"},
-                "latitude": {"field": "lat", "type": "quantitative"},
-                "text": {"field": "name", "type": "nominal"},
-            },
-        },
-    ],
-}
+base_map = (
+    alt.Chart(geojson_data)
+    .mark_geoshape(stroke="white", strokeWidth=0.5)
+    .encode(
+        color=colour_enc,
+        tooltip=[
+            alt.Tooltip("properties.nom_quartier:N", title="Neighborhood"),
+            alt.Tooltip("properties.ref:Q", title="Avg Rent (€/m²)"),
+            alt.Tooltip("properties.commute_minutes:Q", title="Commute (min)"),
+            alt.Tooltip("properties.combined_score:Q", title="Combined Score"),
+        ],
+    )
+)
 
-# Render map via HTML component — st.altair_chart and st.vega_lite_chart
-# flatten GeoJSON geometry into tables, breaking geoshape rendering.
-# Using st.components.v1.html preserves the nested GeoJSON structure.
-import streamlit.components.v1 as components
+campus_pt = (
+    alt.Chart({"values": [{"lon": CAMPUS_LON, "lat": CAMPUS_LAT}]})
+    .mark_point(color="red", size=120, shape="cross", filled=True)
+    .encode(longitude="lon:Q", latitude="lat:Q", tooltip=alt.value(CAMPUS_NAME))
+)
 
-vega_spec_json = json.dumps(vega_spec)
+campus_lbl = (
+    alt.Chart({"values": [{"lon": CAMPUS_LON, "lat": CAMPUS_LAT, "name": CAMPUS_NAME}]})
+    .mark_text(dy=-12, fontSize=11, fontWeight="bold", color="black")
+    .encode(longitude="lon:Q", latitude="lat:Q", text="name:N")
+)
 
-html_content = f"""
-<!DOCTYPE html>
-<html>
-<head>
-  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
-  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
-  <style>body {{ margin: 0; }} #vis {{ width: 100%; }}</style>
-</head>
-<body>
-  <div id="vis"></div>
-  <script>
-    var spec = {vega_spec_json};
-    vegaEmbed('#vis', spec, {{actions: false}}).catch(console.error);
-  </script>
-</body>
-</html>
-"""
+chart = (
+    (base_map + campus_pt + campus_lbl)
+    .properties(width="container", height=550)
+    .project(type="mercator")
+)
 
-components.html(html_content, height=620)
+# Render via chart.to_html() + st.components.v1.html
+# This is necessary because st.altair_chart flattens GeoJSON data,
+# destroying the nested geometry that geoshape needs.
+components.html(chart.to_html(), height=620, scrolling=False)
 
 
 # ──────────────────────────────────────────────
@@ -372,4 +331,4 @@ st.caption(
     "Data: [OpenData Paris](https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers) "
     "& [Île-de-France Mobilités Navitia API](https://prim.iledefrance-mobilites.fr/). "
     "Built by Team Rent o'Matic — Marta SHKRELI & Matteo COUCHOUD."
-) 
+)
