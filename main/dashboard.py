@@ -248,69 +248,79 @@ map_data["combined_score"] = (map_data["rent_score"] + map_data["commute_score"]
 map_data["ref"] = map_data["ref"].round(1)
 map_data["combined_score"] = map_data["combined_score"].round(3)
 
-# Build GeoJSON for Altair
+# Build GeoJSON for Altair — use features list directly
+# alt.InlineData gets stripped by Streamlit's Vega-Lite theme processing
 display_df = map_data.drop(columns=["centroid"], errors="ignore")
-geo_json = alt.InlineData(
-    values=display_df.__geo_interface__,
-    format=alt.DataFormat(property="features", type="json"),
-)
+features = display_df.__geo_interface__["features"]
 
 if map_colour == "Rent (€/m²)":
-    colour_enc = alt.Color(
-        "properties.ref:Q",
-        scale=alt.Scale(scheme="redyellowgreen", reverse=True),
-        legend=alt.Legend(title="Rent (€/m²)"),
-    )
+    color_field = "properties.ref"
+    color_type = "quantitative"
+    color_scale = {"scheme": "redyellowgreen", "reverse": True}
+    legend_title = "Rent (€/m²)"
 elif map_colour == "Commute time (min)":
-    colour_enc = alt.Color(
-        "properties.commute_minutes:O",
-        scale=alt.Scale(
-            domain=sorted_durations,
-            range=["#60e309", "#ecf312", "#ffd900", "#ff6518"][: len(sorted_durations)],
-        ),
-        legend=alt.Legend(title="Commute (min)"),
-    )
+    color_field = "properties.commute_minutes"
+    color_type = "ordinal"
+    color_scale = {
+        "domain": sorted_durations,
+        "range": ["#60e309", "#ecf312", "#ffd900", "#ff6518"][: len(sorted_durations)],
+    }
+    legend_title = "Commute (min)"
 else:
-    colour_enc = alt.Color(
-        "properties.combined_score:Q",
-        scale=alt.Scale(scheme="redyellowgreen", reverse=True, domain=[0, 1]),
-        legend=alt.Legend(title="Score (0=best)"),
-    )
+    color_field = "properties.combined_score"
+    color_type = "quantitative"
+    color_scale = {"scheme": "redyellowgreen", "reverse": True, "domain": [0, 1]}
+    legend_title = "Score (0=best)"
 
-# Build chart
-base_map = (
-    alt.Chart(geo_json)
-    .mark_geoshape(stroke="white", strokeWidth=0.5)
-    .encode(
-        color=colour_enc,
-        tooltip=[
-            alt.Tooltip("properties.nom_quartier:N", title="Neighborhood"),
-            alt.Tooltip("properties.ref:Q", title="Avg Rent (€/m²)"),
-            alt.Tooltip("properties.commute_minutes:Q", title="Commute (min)"),
-            alt.Tooltip("properties.combined_score:Q", title="Combined Score"),
-        ],
-    )
-)
+# Build Vega-Lite spec directly — avoids Streamlit stripping inline data
+vega_spec = {
+    "$schema": "https://vega.github.io/schema/vega-lite/v5.json",
+    "width": 750,
+    "height": 550,
+    "projection": {"type": "mercator"},
+    "layer": [
+        {
+            "data": {
+                "values": features,
+                "format": {"property": "geometry", "type": "json"},
+            },
+            "mark": {"type": "geoshape", "stroke": "white", "strokeWidth": 0.5},
+            "encoding": {
+                "color": {
+                    "field": color_field,
+                    "type": color_type,
+                    "scale": color_scale,
+                    "legend": {"title": legend_title},
+                },
+                "tooltip": [
+                    {"field": "properties.nom_quartier", "type": "nominal", "title": "Neighborhood"},
+                    {"field": "properties.ref", "type": "quantitative", "title": "Avg Rent (€/m²)"},
+                    {"field": "properties.commute_minutes", "type": "quantitative", "title": "Commute (min)"},
+                    {"field": "properties.combined_score", "type": "quantitative", "title": "Combined Score"},
+                ],
+            },
+        },
+        {
+            "data": {"values": [{"lon": CAMPUS_LON, "lat": CAMPUS_LAT}]},
+            "mark": {"type": "point", "color": "red", "size": 120, "shape": "cross", "filled": True},
+            "encoding": {
+                "longitude": {"field": "lon", "type": "quantitative"},
+                "latitude": {"field": "lat", "type": "quantitative"},
+            },
+        },
+        {
+            "data": {"values": [{"lon": CAMPUS_LON, "lat": CAMPUS_LAT, "name": CAMPUS_NAME}]},
+            "mark": {"type": "text", "dy": -12, "fontSize": 11, "fontWeight": "bold", "color": "black"},
+            "encoding": {
+                "longitude": {"field": "lon", "type": "quantitative"},
+                "latitude": {"field": "lat", "type": "quantitative"},
+                "text": {"field": "name", "type": "nominal"},
+            },
+        },
+    ],
+}
 
-campus_pt = (
-    alt.Chart({"values": [{"lon": CAMPUS_LON, "lat": CAMPUS_LAT}]})
-    .mark_point(color="red", size=120, shape="cross", filled=True)
-    .encode(longitude="lon:Q", latitude="lat:Q", tooltip=alt.value(CAMPUS_NAME))
-)
-
-campus_lbl = (
-    alt.Chart({"values": [{"lon": CAMPUS_LON, "lat": CAMPUS_LAT, "name": CAMPUS_NAME}]})
-    .mark_text(dy=-12, fontSize=11, fontWeight="bold", color="black")
-    .encode(longitude="lon:Q", latitude="lat:Q", text="name:N")
-)
-
-chart = (
-    (base_map + campus_pt + campus_lbl)
-    .properties(width=750, height=550)
-    .project(type="mercator")
-)
-
-st.altair_chart(chart, theme=None, use_container_width=True)
+st.vega_lite_chart(vega_spec, use_container_width=True)
 
 
 # ──────────────────────────────────────────────
