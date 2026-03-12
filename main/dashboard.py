@@ -310,7 +310,7 @@ chart = (
     .project(type="mercator")
 )
 
-st.altair_chart(chart, width="stretch")
+st.altair_chart(chart, theme=None, use_container_width=True)
 
 
 # ──────────────────────────────────────────────
@@ -325,7 +325,7 @@ table_data.columns = ["Neighborhood", "Avg Rent (€/m²)", "Commute (min)", "Sc
 table_data = table_data.reset_index(drop=True)
 table_data.index += 1
 
-st.dataframe(table_data, width="stretch")
+st.dataframe(table_data, use_container_width=True)
 
 
 # ──────────────────────────────────────────────
