@@ -218,8 +218,10 @@ if len(filtered) == 0:
     st.warning("No zones match the current filters. Try adjusting the sidebar.")
     st.stop()
 
-# Prepare display data
-display_df = filtered.drop(columns=["centroid"], errors="ignore")
+# Prepare display data — simplify geometry to reduce data size for Altair
+alt.data_transformers.disable_max_rows()
+display_df = filtered.drop(columns=["centroid"], errors="ignore").copy()
+display_df["geometry"] = display_df["geometry"].simplify(tolerance=0.0005, preserve_topology=True)
 geo_json = alt.InlineData(
     values=display_df.__geo_interface__,
     format=alt.DataFormat(property="features", type="json"),
@@ -266,7 +268,8 @@ else:
         filtered_scored["rent_score"] + filtered_scored["commute_score"]
     ) / 2
 
-    display_df = filtered_scored.drop(columns=["centroid"], errors="ignore")
+    display_df = filtered_scored.drop(columns=["centroid"], errors="ignore").copy()
+    display_df["geometry"] = display_df["geometry"].simplify(tolerance=0.0005, preserve_topology=True)
     geo_json = alt.InlineData(
         values=display_df.__geo_interface__,
         format=alt.DataFormat(property="features", type="json"),
