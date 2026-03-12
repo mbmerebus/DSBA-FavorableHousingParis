@@ -320,7 +320,33 @@ vega_spec = {
     ],
 }
 
-st.vega_lite_chart(vega_spec, use_container_width=True)
+# Render map via HTML component — st.altair_chart and st.vega_lite_chart
+# flatten GeoJSON geometry into tables, breaking geoshape rendering.
+# Using st.components.v1.html preserves the nested GeoJSON structure.
+import streamlit.components.v1 as components
+
+vega_spec_json = json.dumps(vega_spec)
+
+html_content = f"""
+<!DOCTYPE html>
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/vega@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-lite@5"></script>
+  <script src="https://cdn.jsdelivr.net/npm/vega-embed@6"></script>
+  <style>body {{ margin: 0; }} #vis {{ width: 100%; }}</style>
+</head>
+<body>
+  <div id="vis"></div>
+  <script>
+    var spec = {vega_spec_json};
+    vegaEmbed('#vis', spec, {{actions: false}}).catch(console.error);
+  </script>
+</body>
+</html>
+"""
+
+components.html(html_content, height=620)
 
 
 # ──────────────────────────────────────────────
@@ -346,4 +372,4 @@ st.caption(
     "Data: [OpenData Paris](https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers) "
     "& [Île-de-France Mobilités Navitia API](https://prim.iledefrance-mobilites.fr/). "
     "Built by Team Rent o'Matic — Marta SHKRELI & Matteo COUCHOUD."
-)
+) 
