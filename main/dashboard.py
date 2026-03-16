@@ -266,15 +266,11 @@ else:
 
 def apply_weight(score_base, weight):
     if score_base <= 1.0:
-        # Zones dans les isochrones : weight élevé = plus pénalisé
-        return score_base ** (1 / weight)
+        # weight élevé = zones lentes plus pénalisées (puissance > 1 étale vers le haut)
+        return score_base ** weight
     else:
         # Zones hors isochrone : toujours > 1, weight élevé = encore plus pénalisé
         return 1.0 + (score_base - 1.0) * weight
-
-map_data["commute_score"] = map_data["commute_score_base"].apply(
-    lambda s: apply_weight(float(s), outside_penalty)
-)
 
 map_data["combined_score_raw"] = (map_data["rent_score"] + map_data["commute_score"]) / 2
 
