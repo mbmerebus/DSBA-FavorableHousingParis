@@ -130,6 +130,11 @@ st.divider()
 # Sidebar filters
 # ──────────────────────────────────────────────
 st.sidebar.header("Filters")
+st.markdown("""
+_Here you can select and modify specific criteria according to your appartment search interests._
+""")
+
+st.divider()
 
 campus_names = [c["name"] for c in campuses]
 selected_campus_name = st.sidebar.selectbox("🎓 Campus", options=campus_names)
@@ -191,7 +196,7 @@ selected_furnished = st.sidebar.multiselect(
     "Furnished / Unfurnished",
     options=furnished_options,
     default=furnished_options,
-    help="Add or delete furnished/unfurnished appartments in the search. Furnished appartments have often higher rents."
+    help="Add or delete furnished/unfurnished appartments in the search.\ Furnished appartments have often higher rents.\ Meublé = Furnished, Non Meublé = Unfurnished."
 )
 
 if "epoque" in paris_zones.columns:
@@ -200,7 +205,7 @@ if "epoque" in paris_zones.columns:
         "Construction era",
         options=epoque_options,
         default=epoque_options,
-        help="Add or delete specific building periods. Older appartments usually have worse heat insullation/energy efficiency, which may increase electricity bills."
+        help="Add or delete specific building periods.\ Older appartments usually have worse heat insullation/energy efficiency, which may increase electricity bills.\ Après=After, Avant=Before."
     )
 else:
     selected_epoque = None
