@@ -158,13 +158,13 @@ if sorted_durations:
 else:
     max_commute = None
 
-outside_penalty = st.sidebar.slider(
+commute_weight = st.sidebar.slider(
     "Commute time weight",
     min_value=0.5,
     max_value=3.0,
     value=1.0,
     step=0.1,
-    help="1.0 = linear. Higher = slow commutes penalized more in the combined score."
+    help="1.0 = equal weight. Higher = slow commutes penalized more in the combined score."
 )
 
 room_types = sorted(paris_zones["piece"].dropna().unique().tolist())
@@ -248,7 +248,8 @@ map_data = filtered.groupby("id_quartier", as_index=False).agg(
 map_data = gpd.GeoDataFrame(map_data, geometry="geometry", crs="EPSG:4326")
 map_data["geometry"] = map_data["geometry"].simplify(tolerance=0.0001, preserve_topology=True)
 
-# Compute combined score on ALL zones (matching or not)
+# ── Scoring ────────────────────────────────────────────────────────────────
+# Rent score: 0 (cheapest) → 1 (most expensive)
 ref_min = map_data["ref"].min()
 ref_max = map_data["ref"].max()
 if ref_max > ref_min:
@@ -256,42 +257,50 @@ if ref_max > ref_min:
 else:
     map_data["rent_score"] = 0.0
 
+# Commute base score: 0 (fastest isochrone) → 1 (slowest isochrone) → 1.5 (outside)
 if sorted_durations:
-    dur_min, dur_max = sorted_durations[0], sorted_durations[-1]
+    dur_min = float(sorted_durations[0])
+    dur_max = float(sorted_durations[-1])
     map_data["commute_score_base"] = map_data["commute_minutes"].apply(
-        lambda m: 1.5 if pd.isna(m) else (m - dur_min) / (dur_max - dur_min) if dur_max > dur_min else 0.0
+        lambda m: 1.5 if pd.isna(m)
+        else 0.0 if dur_max == dur_min
+        else (float(m) - dur_min) / (dur_max - dur_min)
     )
 else:
     map_data["commute_score_base"] = 1.5
 
-def apply_weight(score_base, weight):
-    if score_base <= 1.0:
-        # weight élevé = zones lentes plus pénalisées (puissance > 1 étale vers le haut)
-        return score_base ** weight
+# Apply commute weight as a power curve:
+#   weight = 1.0  → linear (score^1 = score)
+#   weight = 2.0  → quadratic (score^2, slow zones punished more)
+#   weight = 3.0  → cubic (score^3, slow zones punished even more)
+# For zones outside isochrones (base > 1): linear amplification by weight
+def apply_commute_weight(base, weight):
+    b = float(base)
+    w = float(weight)
+    if b <= 1.0:
+        return b ** w          # power curve: weight > 1 pushes slow zones toward 1
     else:
-        # Zones hors isochrone : toujours > 1, weight élevé = encore plus pénalisé
-        return 1.0 + (score_base - 1.0) * weight
+        return 1.0 + (b - 1.0) * w  # linear amplification above 1
 
+map_data["commute_score"] = map_data["commute_score_base"].apply(
+    lambda b: apply_commute_weight(b, commute_weight)
+)
+
+# Combined raw score
 map_data["combined_score_raw"] = (map_data["rent_score"] + map_data["commute_score"]) / 2
 
-score_min = map_data["combined_score_raw"].min()
-score_max = map_data["combined_score_raw"].max()
+# Normalize to [0, 1] so the full colour range is always used
+score_min = float(map_data["combined_score_raw"].min())
+score_max = float(map_data["combined_score_raw"].max())
 if score_max > score_min:
-    map_data["combined_score"] = ((map_data["combined_score_raw"] - score_min) / (score_max - score_min)).round(3)
+    map_data["combined_score"] = (
+        (map_data["combined_score_raw"] - score_min) / (score_max - score_min)
+    ).round(3)
 else:
     map_data["combined_score"] = 0.0
 
 map_data["ref"] = map_data["ref"].round(1)
-
-# Normalize to [0, 1] so the full color range is always used
-score_min = map_data["combined_score_raw"].min()
-score_max = map_data["combined_score_raw"].max()
-if score_max > score_min:
-    map_data["combined_score"] = ((map_data["combined_score_raw"] - score_min) / (score_max - score_min)).round(3)
-else:
-    map_data["combined_score"] = 0.0
-
-map_data["ref"] = map_data["ref"].round(1)
+# ── End scoring ────────────────────────────────────────────────────────────
 
 # Colour selector
 map_colour = st.radio(
@@ -385,9 +394,9 @@ components.html(chart.to_html(), height=620, scrolling=False)
 # ──────────────────────────────────────────────
 # Top neighborhoods table — matching zones only
 # ──────────────────────────────────────────────
-st.subheader("📋 Top neighborhoods (by average rent)")
+st.subheader("📋 Top neighborhoods (by combined score)")
 
-table_data = map_data[map_data["matches"]].sort_values("ref").head(15)[
+table_data = map_data[map_data["matches"]].sort_values("combined_score").head(15)[
     ["nom_quartier", "ref", "commute_minutes", "combined_score"]
 ].copy()
 table_data.columns = ["Neighborhood", "Avg Rent (€/m²)", "Commute (min)", "Score"]
