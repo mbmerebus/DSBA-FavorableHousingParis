@@ -156,25 +156,17 @@ all_zones = load_all_years()
 if all_zones is not None:
     df_history = rh.build_rent_history(all_zones)
 
-    chart_top, chart_bottom = rh.plot_top_increases(df_history, year_range[0], year_range[1])
-    col_top, col_bot = st.columns(2)
+    # ── Rent history per neighborhood ──────────────────────
+    col_a, col_b = st.columns([1, 2])
+    with col_a:
+        available_quartiers = sorted(df_history["nom_quartier"].unique().tolist())
+        selected_quartier = st.selectbox("Select a neighborhood", options=available_quartiers)
 
-    with col_top:
-        st.markdown("🔴 **Highest increases**")
-        for _, row in chart_top.iterrows():
-            st.markdown(
-                f"<span style='color:#c0392b; font-weight:500'>{row['Change (%)']:+.1f}%</span> &nbsp; {row['Neighborhood']}",
-                unsafe_allow_html=True
-            )
+    history_chart = rh.plot_rent_history(df_history, selected_quartier)
+    if history_chart:
+        st.altair_chart(history_chart, use_container_width=True)
 
-    with col_bot:
-        st.markdown("🔵 **Lowest increases**")
-        for _, row in chart_bottom.iterrows():
-            st.markdown(
-                f"<span style='color:#2980b9; font-weight:500'>{row['Change (%)']:+.1f}%</span> &nbsp; {row['Neighborhood']}",
-                unsafe_allow_html=True
-            )
-
+    # ── Biggest rent changes by period ─────────────────────
     st.markdown("#### Biggest rent changes by period")
     all_years = sorted(df_history["annee"].unique().tolist())
     year_range = st.select_slider(
@@ -185,10 +177,22 @@ if all_zones is not None:
 
     chart_top, chart_bottom = rh.plot_top_increases(df_history, year_range[0], year_range[1])
     col_top, col_bot = st.columns(2)
+
     with col_top:
-        st.altair_chart(chart_top, use_container_width=True)
+        st.markdown("**Highest increases**")
+        for _, row in chart_top.iterrows():
+            st.markdown(
+                f"<span style='color:#c0392b; font-weight:500'>{row['Change (%)']:+.1f}%</span> &nbsp; {row['Neighborhood']}",
+                unsafe_allow_html=True
+            )
+
     with col_bot:
-        st.altair_chart(chart_bottom, use_container_width=True)
+        st.markdown("**Lowest increases**")
+        for _, row in chart_bottom.iterrows():
+            st.markdown(
+                f"<span style='color:#2980b9; font-weight:500'>{row['Change (%)']:+.1f}%</span> &nbsp; {row['Neighborhood']}",
+                unsafe_allow_html=True
+            )
 else:
     st.warning("⚠️ Could not load historical rent data.")
 
