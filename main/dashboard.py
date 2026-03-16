@@ -194,6 +194,7 @@ else:
 
 # ──────────────────────────────────────────────
 # Apply filters — keep ALL zones, flag matching ones
+# Zones with no commute data (outside all isochrones) are NEVER matching
 # ──────────────────────────────────────────────
 filtered = paris_zones.copy()
 
@@ -202,13 +203,11 @@ mask = (
     & (filtered["ref"] <= rent_range[1])
     & (filtered["piece"].isin(selected_rooms))
     & (filtered["meuble_txt"].isin(selected_furnished))
+    & (filtered["commute_minutes"].notna())  # zones outside all isochrones never match
 )
 
 if max_commute is not None:
-    mask = mask & (
-        filtered["commute_minutes"].isna()
-        | (filtered["commute_minutes"] <= max_commute)
-    )
+    mask = mask & (filtered["commute_minutes"] <= max_commute)
 
 if selected_epoque is not None:
     mask = mask & filtered["epoque"].isin(selected_epoque)
@@ -259,12 +258,12 @@ else:
 
 if sorted_durations:
     dur_min, dur_max = sorted_durations[0], sorted_durations[-1]
-    # Base commute score: 0 (fastest) → 1 (slowest), NaN → 1 (outside all isochrones)
+    # Base commute score: 0 (fastest) → 1 (slowest isochrone), 1.5 (outside = always penalized)
     map_data["commute_score_base"] = map_data["commute_minutes"].apply(
-        lambda m: 1.0 if pd.isna(m) else (m - dur_min) / (dur_max - dur_min) if dur_max > dur_min else 0
+        lambda m: 1.5 if pd.isna(m) else (m - dur_min) / (dur_max - dur_min) if dur_max > dur_min else 0
     )
 else:
-    map_data["commute_score_base"] = 1.0
+    map_data["commute_score_base"] = 1.5
 
 # Apply power curve: higher weight = slow zones punished more
 map_data["commute_score"] = map_data["commute_score_base"] ** outside_penalty
@@ -296,7 +295,9 @@ geojson_data = alt.InlineData(
     format=alt.DataFormat(property="features", type="json"),
 )
 
-# Colour encoding: matching zones get full colour, non-matching zones are greyed out
+# Colour encoding:
+# - matching zones → full colour
+# - all other zones (non-matching or outside isochrones) → grey
 if map_colour == "Rent (€/m²)":
     colour_enc = alt.condition(
         "datum.properties.matches",
@@ -310,19 +311,15 @@ if map_colour == "Rent (€/m²)":
 elif map_colour == "Commute time (min)":
     colour_enc = alt.condition(
         "datum.properties.matches",
-        alt.condition(
-            "datum.properties.commute_minutes !== null",
-            alt.Color(
-                "properties.commute_minutes:O",
-                scale=alt.Scale(
-                    domain=sorted_durations,
-                    range=["#60e309", "#ecf312", "#ffd900", "#ff6518"][: len(sorted_durations)],
-                ),
-                legend=alt.Legend(title="Commute (min)"),
+        alt.Color(
+            "properties.commute_minutes:O",
+            scale=alt.Scale(
+                domain=sorted_durations,
+                range=["#60e309", "#ecf312", "#ffd900", "#ff6518"][: len(sorted_durations)],
             ),
-            alt.value("#8B0000")  # crimson for zones outside all isochrones
+            legend=alt.Legend(title="Commute (min)"),
         ),
-        alt.value("#d0d0d0")  # grey for non-matching zones
+        alt.value("#d0d0d0")
     )
 else:
     colour_enc = alt.condition(
@@ -332,7 +329,7 @@ else:
             scale=alt.Scale(scheme="redyellowgreen", reverse=True, domain=[0, 1]),
             legend=alt.Legend(title="Score (0=best)"),
         ),
-        alt.value("#d0d0d0")  # grey for non-matching zones
+        alt.value("#d0d0d0")
     )
 
 base_map = (
@@ -345,7 +342,6 @@ base_map = (
             alt.Tooltip("properties.ref:Q", title="Avg Rent (€/m²)"),
             alt.Tooltip("properties.commute_minutes:Q", title="Commute (min)"),
             alt.Tooltip("properties.combined_score:Q", title="Combined Score"),
-            alt.Tooltip("properties.matches:N", title="Matches filters?"),
         ],
     )
 )
