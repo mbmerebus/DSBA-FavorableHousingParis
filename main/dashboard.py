@@ -13,18 +13,28 @@ import json
 import os
 from shapely.geometry import shape
 
+
 # ──────────────────────────────────────────────
 # Page config
 # ──────────────────────────────────────────────
 st.set_page_config(
-    page_title="Paris Student Housing Dashboard",
+    page_title="Favorable Housing for Student in Paris",
     page_icon="🏠",
     layout="wide",
 )
 
 # Campus info
-CAMPUS_NAME = "Paris 1 Panthéon-Sorbonne"
-CAMPUS_LON, CAMPUS_LAT = 2.3463, 48.8467
+possible_campus_paths = [
+    os.path.join(os.path.dirname(__file__), "..", "geodata", "campus_data.json"),
+    "/mount/src/dsba-favorablehousingparis/geodata/campus_data.json",
+]
+
+campuses = []
+for p in possible_campus_paths:
+    if os.path.exists(p):
+        with open(p) as f:
+            campuses = json.load(f)
+        break
 
 
 # ──────────────────────────────────────────────
@@ -118,6 +128,15 @@ st.markdown(
 # Sidebar filters
 # ──────────────────────────────────────────────
 st.sidebar.header("🔍 Filters")
+
+st.sidebar.header("🔍 Filters")
+
+campus_names = [c["name"] for c in campuses]
+selected_campus_name = st.sidebar.selectbox("🎓 Campus", options=campus_names)
+selected_campus = next(c for c in campuses if c["name"] == selected_campus_name)
+CAMPUS_NAME = selected_campus["name"]
+CAMPUS_LON  = selected_campus["lon"]
+CAMPUS_LAT  = selected_campus["lat"]
 
 rent_min_val = float(paris_zones["ref"].min())
 rent_max_val = float(paris_zones["ref"].max())
@@ -328,7 +347,7 @@ st.dataframe(table_data, use_container_width=True)
 # ──────────────────────────────────────────────
 st.divider()
 st.caption(
-    "Data: [OpenData Paris](https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers) "
-    "& [Île-de-France Mobilités Navitia API](https://prim.iledefrance-mobilites.fr/). "
+    "Data: [OpenData Paris](https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers)\n"
+    "& [Île-de-France Mobilités Navitia API](https://prim.iledefrance-mobilites.fr/). \n"
     "Built by Team PixelParty — Marta SHKRELI & Matteo COUCHOUD."
 )
