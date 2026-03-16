@@ -161,7 +161,7 @@ else:
 commute_weight = st.sidebar.slider(
     "Commute time weight",
     min_value=0.5,
-    max_value=3.0,
+    max_value=1.5,
     value=1.0,
     step=0.1,
     help="1.0 = equal weight. Higher = slow commutes penalized more in the combined score."
