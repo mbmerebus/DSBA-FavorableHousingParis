@@ -426,9 +426,17 @@ st.dataframe(table_data, use_container_width=True)
 # ──────────────────────────────────────────────
 # Footer
 # ──────────────────────────────────────────────
+st.markdown("""
+#### How the score works
+Each neighborhood is scored by averaging its normalized **rent** and **commute time** (0 = best, 1 = worst).
+The commute weight shifts how much slow transit hurts the final score.
+Neighborhoods outside all isochrones are automatically penalized.
+
+_Score = (rent_score + commute_score^(1/weight)) / 2_
+""")
 st.divider()
 st.caption(
-    "Data: [OpenData Paris](https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers)\n"
-    "& [Île-de-France Mobilités Navitia API](https://prim.iledefrance-mobilites.fr/). \n"
+    "Data: [OpenData Paris](https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers) "
+    "& [Île-de-France Mobilités Navitia API](https://prim.iledefrance-mobilites.fr/). "
     "Built by Team PixelParty — Marta SHKRELI & Matteo COUCHOUD."
 )
