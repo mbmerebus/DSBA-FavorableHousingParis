@@ -76,7 +76,7 @@ def load_data(campus_slug):
 
     iso_dir = None
     for p in possible_iso_dirs:
-        if os.path.exists(p):
+        if os.path.exists(p) and any(f.endswith(".json") for f in os.listdir(p)):
             iso_dir = p
             break
 
@@ -198,9 +198,10 @@ filtered = filtered[filtered["piece"].isin(selected_rooms)]
 filtered = filtered[filtered["meuble_txt"].isin(selected_furnished)]
 
 if max_commute is not None:
+    # Keep zones within commute limit + zones with no data (shown in crimson on map)
     filtered = filtered[
-        filtered["commute_minutes"].notna()
-        & (filtered["commute_minutes"] <= max_commute)
+        (filtered["commute_minutes"].isna())
+        | (filtered["commute_minutes"] <= max_commute)
     ]
 
 if selected_epoque is not None:
@@ -271,6 +272,8 @@ geojson_data = alt.InlineData(
     format=alt.DataFormat(property="features", type="json"),
 )
 
+OUTSIDE_PENALTY = 1.5
+
 if map_colour == "Rent (€/m²)":
     colour_enc = alt.Color(
         "properties.ref:Q",
@@ -278,18 +281,22 @@ if map_colour == "Rent (€/m²)":
         legend=alt.Legend(title="Rent (€/m²)"),
     )
 elif map_colour == "Commute time (min)":
-    colour_enc = alt.Color(
-        "properties.commute_minutes:O",
-        scale=alt.Scale(
-            domain=sorted_durations,
-            range=["#60e309", "#ecf312", "#ffd900", "#ff6518"][: len(sorted_durations)],
+    colour_enc = alt.condition(
+        "datum.properties.commute_minutes !== null",
+        alt.Color(
+            "properties.commute_minutes:O",
+            scale=alt.Scale(
+                domain=sorted_durations,
+                range=["#60e309", "#ecf312", "#ffd900", "#ff6518"][: len(sorted_durations)],
+            ),
+            legend=alt.Legend(title="Commute (min)"),
         ),
-        legend=alt.Legend(title="Commute (min)"),
+        alt.value("#8B0000")  # crimson for unreachable zones
     )
 else:
     colour_enc = alt.Color(
         "properties.combined_score:Q",
-        scale=alt.Scale(scheme="redyellowgreen", reverse=True, domain=[0, 1]),
+        scale=alt.Scale(scheme="redyellowgreen", reverse=True, domain=[0, OUTSIDE_PENALTY]),
         legend=alt.Legend(title="Score (0=best)"),
     )
 
