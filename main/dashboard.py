@@ -41,7 +41,7 @@ for p in possible_campus_paths:
 # Data loading (cached so it's fast on re-runs)
 # ──────────────────────────────────────────────
 @st.cache_data
-def load_data():
+def load_data(campus_slug):
     """Load GeoJSON + isochrone data and compute commute times."""
     possible_paths = [
         os.path.join(os.path.dirname(__file__), "..", "geodata", "logement-encadrement-des-loyers.geojson"),
@@ -63,7 +63,13 @@ def load_data():
     paris_zones["centroid"] = paris_zones.to_crs(epsg=3857).centroid.to_crs(epsg=4326)
 
     # Load isochrone polygons
-    possible_iso_dirs = [
+    possible_iso_dirs = []
+    if campus_slug:
+        possible_iso_dirs += [
+            os.path.join(os.path.dirname(__file__), "..", "isochrone", campus_slug),
+            f"/mount/src/dsba-favorablehousingparis/isochrone/{campus_slug}",
+        ]
+    possible_iso_dirs += [
         os.path.join(os.path.dirname(__file__), "..", "isochrone"),
         "/mount/src/dsba-favorablehousingparis/isochrone",
     ]
@@ -102,17 +108,7 @@ def load_data():
     return paris_zones, sorted_durations
 
 
-with st.spinner("Loading map data... this may take a moment on first load."):
-    paris_zones, sorted_durations = load_data()
 
-if paris_zones is None:
-    st.error(
-        "⚠️ **GeoJSON file not found.** "
-        "Please download *logement-encadrement-des-loyers.geojson* from "
-        "[OpenData Paris](https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers) "
-        "and place it in the `geodata/` folder of this repository."
-    )
-    st.stop()
 
 
 # ──────────────────────────────────────────────
@@ -129,14 +125,22 @@ st.markdown(
 # ──────────────────────────────────────────────
 st.sidebar.header("🔍 Filters")
 
-st.sidebar.header("🔍 Filters")
-
 campus_names = [c["name"] for c in campuses]
 selected_campus_name = st.sidebar.selectbox("🎓 Campus", options=campus_names)
 selected_campus = next(c for c in campuses if c["name"] == selected_campus_name)
 CAMPUS_NAME = selected_campus["name"]
 CAMPUS_LON  = selected_campus["lon"]
 CAMPUS_LAT  = selected_campus["lat"]
+
+#Gets the campuses and loads data according to the selected campus
+CAMPUS_SLUG = selected_campus.get("slug")
+
+with st.spinner("Loading map data..."):
+    paris_zones, sorted_durations = load_data(CAMPUS_SLUG)
+
+if paris_zones is None:
+    st.error("⚠️ GeoJSON file not found.")
+    st.stop()
 
 rent_min_val = float(paris_zones["ref"].min())
 rent_max_val = float(paris_zones["ref"].max())
