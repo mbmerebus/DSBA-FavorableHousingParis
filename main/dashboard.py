@@ -290,14 +290,8 @@ map_data["commute_score"] = map_data["commute_score_base"].apply(
 map_data["combined_score_raw"] = (map_data["rent_score"] + map_data["commute_score"]) / 2
 
 # Normalize to [0, 1] so the full colour range is always used
-score_min = float(map_data["combined_score_raw"].min())
-score_max = float(map_data["combined_score_raw"].max())
-if score_max > score_min:
-    map_data["combined_score"] = (
-        (map_data["combined_score_raw"] - score_min) / (score_max - score_min)
-    ).round(3)
-else:
-    map_data["combined_score"] = 0.0
+# Ne pas normaliser — garder le score brut pour que le poids ait un effet visible
+map_data["combined_score"] = map_data["combined_score_raw"].round(3)
 
 map_data["ref"] = map_data["ref"].round(1)
 # ── End scoring ────────────────────────────────────────────────────────────
