@@ -1,0 +1,73 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap');
+
+/* Background */
+html, body, [data-testid="stAppViewContainer"], [data-testid="stApp"] {
+    background-color: #faf6f0 !important;
+    font-family: 'Roboto', sans-serif !important;
+}
+
+/* Main content area */
+[data-testid="stMain"], .main .block-container {
+    background-color: #faf6f0 !important;
+    font-family: 'Roboto', sans-serif !important;
+}
+
+/* Sidebar */
+[data-testid="stSidebar"] {
+    background-color: #f5efe6 !important;
+    font-family: 'Roboto', sans-serif !important;
+}
+
+/* All text */
+p, div, span, label, [data-testid="stMarkdownContainer"] p {
+    font-family: 'Roboto', sans-serif !important;
+    color: #3a2e22 !important;
+}
+
+/* Titles h1, h2, h3 → Playfair */
+h1, h2, h3,
+[data-testid="stMarkdownContainer"] h1,
+[data-testid="stMarkdownContainer"] h2,
+[data-testid="stMarkdownContainer"] h3 {
+    font-family: 'Playfair Display', serif !important;
+    color: #2c2116 !important;
+}
+
+[data-testid="stTitle"] {
+    font-family: 'Playfair Display', serif !important;
+    color: #2c2116 !important;
+}
+
+[data-testid="stHeadingWithActionElements"] h2,
+[data-testid="stHeadingWithActionElements"] h3 {
+    font-family: 'Playfair Display', serif !important;
+    color: #2c2116 !important;
+}
+
+/* Metrics */
+[data-testid="stMetricLabel"], [data-testid="stMetricValue"] {
+    font-family: 'Roboto', sans-serif !important;
+    color: #3a2e22 !important;
+}
+
+[data-testid="stMetric"] {
+    background-color: #f0e8d8 !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+}
+
+/* Radio buttons */
+[data-testid="stRadio"] label {
+    font-family: 'Roboto', sans-serif !important;
+}
+
+/* Divider */
+hr {
+    border-color: #d4c5b0 !important;
+}
+
+/* Caption */
+[data-testid="stCaptionContainer"] {
+    font-family: 'Roboto', sans-serif !important;
+    color: #8a7a6a !important;
+}
