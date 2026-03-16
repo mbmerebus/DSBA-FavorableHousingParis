@@ -71,3 +71,44 @@ hr {
     font-family: 'Roboto', sans-serif !important;
     color: #8a7a6a !important;
 }
+
+
+/* Selectbox and multiselect containers */
+[data-testid="stSelectbox"] > div > div,
+[data-testid="stMultiSelect"] > div > div {
+    background-color: #f0e8d8 !important;
+    border: 1px solid #d4c5b0 !important;
+    border-radius: 8px !important;
+    color: #3a2e22 !important;
+}
+
+/* Dropdown options list */
+[data-testid="stSelectbox"] ul,
+[data-testid="stMultiSelect"] ul {
+    background-color: #f0e8d8 !important;
+    color: #3a2e22 !important;
+}
+
+/* Selected tags in multiselect */
+[data-testid="stMultiSelect"] span[data-baseweb="tag"] {
+    background-color: #d4c5b0 !important;
+    color: #2c2116 !important;
+}
+
+/* Tag text */
+[data-testid="stMultiSelect"] span[data-baseweb="tag"] span {
+    color: #2c2116 !important;
+}
+
+/* Input text inside selects */
+[data-testid="stSelectbox"] input,
+[data-testid="stMultiSelect"] input {
+    color: #3a2e22 !important;
+    background-color: transparent !important;
+}
+
+/* Dropdown arrow and icons */
+[data-testid="stSelectbox"] svg,
+[data-testid="stMultiSelect"] svg {
+    fill: #3a2e22 !important;
+}
