@@ -130,14 +130,14 @@ st.divider()
 # Sidebar filters
 # ──────────────────────────────────────────────
 st.sidebar.header("Filters")
-st.markdown("""
+st.sidebar.markdown("""
 _Here you can select and modify specific criteria according to your appartment search interests._
 """)
 
-st.divider()
+st.sidebar.divider()
 
 campus_names = [c["name"] for c in campuses]
-selected_campus_name = st.sidebar.selectbox("🎓 Campus", options=campus_names)
+selected_campus_name = st.sidebar.selectbox("Campus selected", options=campus_names)
 selected_campus = next(c for c in campuses if c["name"] == selected_campus_name)
 CAMPUS_NAME = selected_campus["name"]
 CAMPUS_LON  = selected_campus["lon"]
