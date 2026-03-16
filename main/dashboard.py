@@ -258,26 +258,34 @@ else:
 
 if sorted_durations:
     dur_min, dur_max = sorted_durations[0], sorted_durations[-1]
-    # Base commute score: 0 (fastest) → 1 (slowest isochrone), 1.5 (outside = always penalized)
     map_data["commute_score_base"] = map_data["commute_minutes"].apply(
-        lambda m: 1.5 if pd.isna(m) else (m - dur_min) / (dur_max - dur_min) if dur_max > dur_min else 0
+        lambda m: 1.5 if pd.isna(m) else (m - dur_min) / (dur_max - dur_min) if dur_max > dur_min else 0.0
     )
 else:
     map_data["commute_score_base"] = 1.5
 
 def apply_weight(score_base, weight):
-    if pd.isna(score_base):
-        return 1.5  # ne devrait pas arriver mais sécurité
     if score_base <= 1.0:
         # Zones dans les isochrones : weight élevé = plus pénalisé
         return score_base ** (1 / weight)
     else:
-        # Zones hors isochrone : toujours au-dessus de 1, weight élevé = encore plus pénalisé
+        # Zones hors isochrone : toujours > 1, weight élevé = encore plus pénalisé
         return 1.0 + (score_base - 1.0) * weight
 
 map_data["commute_score"] = map_data["commute_score_base"].apply(
-    lambda s: apply_weight(s, outside_penalty)
+    lambda s: apply_weight(float(s), outside_penalty)
 )
+
+map_data["combined_score_raw"] = (map_data["rent_score"] + map_data["commute_score"]) / 2
+
+score_min = map_data["combined_score_raw"].min()
+score_max = map_data["combined_score_raw"].max()
+if score_max > score_min:
+    map_data["combined_score"] = ((map_data["combined_score_raw"] - score_min) / (score_max - score_min)).round(3)
+else:
+    map_data["combined_score"] = 0.0
+
+map_data["ref"] = map_data["ref"].round(1)
 
 # Normalize to [0, 1] so the full color range is always used
 score_min = map_data["combined_score_raw"].min()
