@@ -90,14 +90,12 @@ def plot_rent_history(df: pd.DataFrame, quartier_name: str) -> alt.Chart:
 
 def plot_top_increases(df: pd.DataFrame, year_min: int, year_max: int, top_n: int = 5) -> tuple:
     """
-    Returns two Altair charts side by side:
-    - top_n neighborhoods with highest rent increase over the given year range
-    - top_n neighborhoods with lowest rent increase (or biggest decrease)
+    Returns two Streamlit-ready DataFrames with styled percentages:
+    - top_n neighborhoods with highest rent increase
+    - top_n neighborhoods with lowest rent increase
     """
-    # Filter to selected year range
     df_range = df[df["annee"].between(year_min, year_max)]
 
-    # Get rent at start and end of range for each quartier
     first_rent = (
         df_range[df_range["annee"] == df_range.groupby("nom_quartier")["annee"].transform("min")]
         [["nom_quartier", "ref"]]
@@ -114,40 +112,10 @@ def plot_top_increases(df: pd.DataFrame, year_min: int, year_max: int, top_n: in
     merged = first_rent.merge(last_rent, on="nom_quartier")
     merged["increase_pct"] = ((merged["ref_last"] - merged["ref_first"]) / merged["ref_first"] * 100).round(1)
 
-    # Top N highest increases
-    top = merged.nlargest(top_n, "increase_pct").sort_values("increase_pct", ascending=True)
-    # Top N lowest increases (could be negative)
-    bottom = merged.nsmallest(top_n, "increase_pct").sort_values("increase_pct", ascending=False)
+    top = merged.nlargest(top_n, "increase_pct")[["nom_quartier", "increase_pct"]].reset_index(drop=True)
+    bottom = merged.nsmallest(top_n, "increase_pct")[["nom_quartier", "increase_pct"]].reset_index(drop=True)
 
-    def make_chart(data, title, color_scheme, reverse):
-        return (
-            alt.Chart(data).mark_bar().encode(
-                x=alt.X("increase_pct:Q", title="Change (%)", axis=alt.Axis(format=".1f")),
-                y=alt.Y(
-                    "nom_quartier:N",
-                    sort=alt.EncodingSortField(field="increase_pct", order="ascending"),
-                    title="",
-                    axis=alt.Axis(labelLimit=200, labelOverlap=False)
-                ),
-                color=alt.Color(
-                    "increase_pct:Q",
-                    scale=alt.Scale(scheme=color_scheme, reverse=reverse),
-                    legend=None
-                ),
-                tooltip=[
-                    alt.Tooltip("nom_quartier:N", title="Neighborhood"),
-                    alt.Tooltip("ref_first:Q", title=f"Rent {year_min} (€/m²)", format=".1f"),
-                    alt.Tooltip("ref_last:Q", title=f"Rent {year_max} (€/m²)", format=".1f"),
-                    alt.Tooltip("increase_pct:Q", title="Change (%)", format=".1f"),
-                ]
-            ).properties(
-                width="container",
-                height=top_n * 50,
-                title=title
-            )
-        )
+    top.columns = ["Neighborhood", "Change (%)"]
+    bottom.columns = ["Neighborhood", "Change (%)"]
 
-    chart_top = make_chart(top, f"Top {top_n} highest increases", "reds", False)
-    chart_bottom = make_chart(bottom, f"Top {top_n} lowest increases", "greens", True)
-
-    return chart_top, chart_bottom
+    return top, bottom

@@ -156,14 +156,24 @@ all_zones = load_all_years()
 if all_zones is not None:
     df_history = rh.build_rent_history(all_zones)
 
-    col_a, col_b = st.columns([1, 2])
-    with col_a:
-        available_quartiers = sorted(df_history["nom_quartier"].unique().tolist())
-        selected_quartier = st.selectbox("Select a neighborhood", options=available_quartiers)
+    chart_top, chart_bottom = rh.plot_top_increases(df_history, year_range[0], year_range[1])
+    col_top, col_bot = st.columns(2)
 
-    history_chart = rh.plot_rent_history(df_history, selected_quartier)
-    if history_chart:
-        st.altair_chart(history_chart, use_container_width=True)
+    with col_top:
+        st.markdown("🔴 **Highest increases**")
+        for _, row in chart_top.iterrows():
+            st.markdown(
+                f"<span style='color:#c0392b; font-weight:500'>{row['Change (%)']:+.1f}%</span> &nbsp; {row['Neighborhood']}",
+                unsafe_allow_html=True
+            )
+
+    with col_bot:
+        st.markdown("🔵 **Lowest increases**")
+        for _, row in chart_bottom.iterrows():
+            st.markdown(
+                f"<span style='color:#2980b9; font-weight:500'>{row['Change (%)']:+.1f}%</span> &nbsp; {row['Neighborhood']}",
+                unsafe_allow_html=True
+            )
 
     st.markdown("#### Biggest rent changes by period")
     all_years = sorted(df_history["annee"].unique().tolist())
@@ -189,7 +199,7 @@ st.divider()
 # ──────────────────────────────────────────────
 st.sidebar.header("Filters")
 st.sidebar.markdown("""
-_Here you can select and modify specific criteria according to your appartment search interests._
+_Here you can select and modify specific criteria according to your appartment search interests. This works only for the map._
 """)
 
 campus_names = [c["name"] for c in campuses]
