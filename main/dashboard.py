@@ -330,5 +330,5 @@ st.divider()
 st.caption(
     "Data: [OpenData Paris](https://opendata.paris.fr/explore/dataset/logement-encadrement-des-loyers) "
     "& [Île-de-France Mobilités Navitia API](https://prim.iledefrance-mobilites.fr/). "
-    "Built by Team Rent o'Matic — Marta SHKRELI & Matteo COUCHOUD."
+    "Built by Team PixelParty — Marta SHKRELI & Matteo COUCHOUD."
 )
