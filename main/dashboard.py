@@ -114,15 +114,22 @@ def load_data(campus_slug):
 # Header
 # ──────────────────────────────────────────────
 st.title("🏠 Paris Student Housing Dashboard")
-st.markdown(
-    "Find the best neighborhoods in Paris balancing **rent price** and **commute time**. "
-    "Use the sidebar filters to narrow down your search."
-)
+st.markdown("""
+Paris is one of Europe's most expensive student cities, with reference rents ranging from
+**under 20 €/m²** in outer arrondissements to **over 40 €/m²** in the most central neighborhoods.
+High rent and varying commute times can put pressure on a student's life, which makes it all the more important
+to find the right appartment for their studies.
+
+The dashboard bellow lets you rank and find Paris neighborhoods that have existing appartment which satisfy a select number of criteria,
+most notably average rent and commute time. But you could also search for other criteria.
+""")
+
+st.divider()
 
 # ──────────────────────────────────────────────
 # Sidebar filters
 # ──────────────────────────────────────────────
-st.sidebar.header("🔍 Filters")
+st.sidebar.header("Filters")
 
 campus_names = [c["name"] for c in campuses]
 selected_campus_name = st.sidebar.selectbox("🎓 Campus", options=campus_names)
@@ -149,6 +156,7 @@ rent_range = st.sidebar.slider(
     max_value=rent_max_val,
     value=(rent_min_val, rent_max_val),
     step=0.5,
+    help="You can narrow or widden your acceptable rent range."
 )
 
 if sorted_durations:
@@ -156,6 +164,7 @@ if sorted_durations:
         "Max commute time (minutes)",
         options=sorted_durations,
         value=sorted_durations[-1],
+        help="You can narrow or widden your acceptable commute time range."
     )
 else:
     max_commute = None
@@ -174,6 +183,7 @@ selected_rooms = st.sidebar.multiselect(
     "Number of rooms",
     options=room_types,
     default=room_types,
+    help="Add or delete a specific amount of rooms. A higher amount of rooms may increase the average rent."
 )
 
 furnished_options = sorted(paris_zones["meuble_txt"].dropna().unique().tolist())
@@ -181,6 +191,7 @@ selected_furnished = st.sidebar.multiselect(
     "Furnished / Unfurnished",
     options=furnished_options,
     default=furnished_options,
+    help="Add or delete furnished/unfurnished appartments in the search. Furnished appartments have often higher rents."
 )
 
 if "epoque" in paris_zones.columns:
@@ -189,6 +200,7 @@ if "epoque" in paris_zones.columns:
         "Construction era",
         options=epoque_options,
         default=epoque_options,
+        help="Add or delete specific building periods. Older appartments usually have worse heat insullation/energy efficiency, which may increase electricity bills."
     )
 else:
     selected_epoque = None
