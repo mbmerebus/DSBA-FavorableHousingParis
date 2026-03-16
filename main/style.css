@@ -1,0 +1,9 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Roboto:wght@300;400;500&display=swap');
+
+h1, h2, h3, h4,
+[data-testid="stHeadingWithActionElements"] h1,
+[data-testid="stHeadingWithActionElements"] h2,
+[data-testid="stHeadingWithActionElements"] h3 {
+    font-family: 'Playfair Display', serif !important;
+    color: #2c2116 !important;
+}

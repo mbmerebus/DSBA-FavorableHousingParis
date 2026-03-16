@@ -22,6 +22,8 @@ st.set_page_config(
     page_icon="🏠",
     layout="wide",
 )
+with open(os.path.join(os.path.dirname(__file__), "style.css")) as f:
+    st.markdown(f"<style>{f.read()}</style>", unsafe_allow_html=True)
 
 
 
@@ -452,7 +454,7 @@ components.html(chart.to_html(), height=620, scrolling=False)
 # ──────────────────────────────────────────────
 # Top neighborhoods table — matching zones only
 # ──────────────────────────────────────────────
-st.subheader("📋 Top neighborhoods (by combined score)")
+st.subheader("Top neighborhoods (by combined score)")
 
 table_data = map_data[map_data["matches"]].sort_values("combined_score").head(15)[
     ["nom_quartier", "ref", "commute_minutes", "combined_score"]
