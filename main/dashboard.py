@@ -128,7 +128,12 @@ most notably average rent and commute time. But you could also search for other 
 # Rent history
 # ──────────────────────────────────────────────
 st.divider()
-st.subheader("📈 Rent history")
+st.subheader("Rent history")
+st.markdown(
+    """
+The two following charts illustrate how the rent evolved through time in a particular neighborhood. You can thus see the different tendencies.
+    """
+)
 
 # Load full data (all years) — separate from the filtered paris_zones
 @st.cache_data
