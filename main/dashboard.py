@@ -424,13 +424,15 @@ if map_colour == "Rent (€/m²)":
         alt.value("#d0d0d0")
     )
 elif map_colour == "Commute time (min)":
+    # Blue palette: light (fast) → dark (slow) — accessible, daltonism-friendly
+    blue_palette = ["#d1e5f0", "#92c5de", "#4393c3", "#2166ac"]
     colour_enc = alt.condition(
         "datum.properties.matches",
         alt.Color(
             "properties.commute_minutes:O",
             scale=alt.Scale(
                 domain=sorted_durations,
-                range=["#60e309", "#ecf312", "#ffd900", "#ff6518"][: len(sorted_durations)],
+                range=blue_palette[: len(sorted_durations)],
             ),
             legend=alt.Legend(title="Commute (min)"),
         ),
