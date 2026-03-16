@@ -278,9 +278,9 @@ def apply_commute_weight(base, weight):
     b = float(base)
     w = float(weight)
     if b <= 1.0:
-        return b ** w          # power curve: weight > 1 pushes slow zones toward 1
+        return b ** (1 / w)    # weight > 1 → score closer to 1 → more penalized
     else:
-        return 1.0 + (b - 1.0) * w  # linear amplification above 1
+        return 1.0 + (b - 1.0) * w  # outside isochrones: linear amplification
 
 map_data["commute_score"] = map_data["commute_score_base"].apply(
     lambda b: apply_commute_weight(b, commute_weight)
