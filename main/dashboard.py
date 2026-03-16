@@ -134,8 +134,6 @@ st.sidebar.markdown("""
 _Here you can select and modify specific criteria according to your appartment search interests._
 """)
 
-st.sidebar.divider()
-
 campus_names = [c["name"] for c in campuses]
 selected_campus_name = st.sidebar.selectbox("Campus selected", options=campus_names)
 selected_campus = next(c for c in campuses if c["name"] == selected_campus_name)
