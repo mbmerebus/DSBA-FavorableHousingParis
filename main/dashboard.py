@@ -12,7 +12,7 @@ import altair as alt
 import json
 import os
 from shapely.geometry import shape
-
+import rent_history as rh
 
 # ──────────────────────────────────────────────
 # Page config
@@ -123,6 +123,42 @@ to find the right appartment for their studies.
 The dashboard bellow lets you rank and find Paris neighborhoods that have existing appartment which satisfy a select number of criteria,
 most notably average rent and commute time. But you could also search for other criteria.
 """)
+
+# ──────────────────────────────────────────────
+# Rent history
+# ──────────────────────────────────────────────
+st.divider()
+st.subheader("📈 Rent history")
+
+# Load full data (all years) — separate from the filtered paris_zones
+@st.cache_data
+def load_all_years():
+    possible_paths = [
+        os.path.join(os.path.dirname(__file__), "..", "geodata", "logement-encadrement-des-loyers.geojson"),
+        "../geodata/logement-encadrement-des-loyers.geojson",
+    ]
+    for p in possible_paths:
+        if os.path.exists(p):
+            return gpd.read_file(p)
+    return None
+
+all_zones = load_all_years()
+
+if all_zones is not None:
+    df_history = rh.build_rent_history(all_zones)
+
+    col_a, col_b = st.columns([1, 2])
+    with col_a:
+        available_quartiers = sorted(df_history["nom_quartier"].unique().tolist())
+        selected_quartier = st.selectbox("Select a neighborhood", options=available_quartiers)
+
+    history_chart = rh.plot_rent_history(df_history, selected_quartier)
+    if history_chart:
+        st.altair_chart(history_chart, use_container_width=True)
+
+    st.markdown("#### Biggest rent increases since first record")
+    increases_chart = rh.plot_top_increases(df_history)
+    st.altair_chart(increases_chart, use_container_width=True)
 
 st.divider()
 
