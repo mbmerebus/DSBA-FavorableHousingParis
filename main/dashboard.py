@@ -119,11 +119,11 @@ st.title("🏠 Paris Student Housing Dashboard")
 st.markdown("""
 Paris is one of Europe's most expensive student cities, with reference rents ranging from
 **under 20 €/m²** in outer arrondissements to **over 40 €/m²** in the most central neighborhoods.
-High rent and varying commute times can put pressure on a student's life, which makes it all the more important
-to find the right appartment for their studies.
+Student housing is more than a logistics problem, it is a public health issue. 
+With limited budgets and scarce dormitory spots, students are pushed to choose between 
+unaffordable rents near campus and cheaper housing far away, at the cost of time and well-being. 
 
-The dashboard bellow lets you rank and find Paris neighborhoods that have existing appartment which satisfy a select number of criteria,
-most notably average rent and commute time. But you could also search for other criteria.
+The dashboard bellow lets you explore the trade-off between rent and commute time. The map bellow serves as a solution that helps discern affordable and less affordable neighborhood in Paris..
 """)
 
 # ──────────────────────────────────────────────
