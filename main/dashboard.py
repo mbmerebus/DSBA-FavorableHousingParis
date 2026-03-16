@@ -133,7 +133,9 @@ st.divider()
 st.subheader("Rent history")
 st.markdown(
     """
-The two following charts illustrate how the rent evolved through time in a particular neighborhood. You can thus see the different tendencies.
+The two following charts illustrate how the rent evolved through time in a particular neighborhood.\
+As seen bellow, the rent prices have increased in the vast majority of neighborhoods, with _Clignancourt_, _Grandes-Carrières_ and _Picpus_ seeing the highest from 2019 to 2025.
+
     """
 )
 
@@ -142,7 +144,7 @@ The two following charts illustrate how the rent evolved through time in a parti
 def load_all_years():
     possible_paths = [
         os.path.join(os.path.dirname(__file__), "..", "geodata", "logement-encadrement-des-loyers.geojson"),
-        "../geodata/logement-encadrement-des-loyers.geojson",
+        "/mount/src/dsba-favorablehousingparis/geodata/logement-encadrement-des-loyers.geojson",
     ]
     for p in possible_paths:
         if os.path.exists(p):
@@ -163,9 +165,22 @@ if all_zones is not None:
     if history_chart:
         st.altair_chart(history_chart, use_container_width=True)
 
-    st.markdown("#### Biggest rent increases since first record")
-    increases_chart = rh.plot_top_increases(df_history)
-    st.altair_chart(increases_chart, use_container_width=True)
+    st.markdown("#### Biggest rent changes by period")
+    all_years = sorted(df_history["annee"].unique().tolist())
+    year_range = st.select_slider(
+        "Year range",
+        options=all_years,
+        value=(all_years[0], all_years[-1]),
+    )
+
+    chart_top, chart_bottom = rh.plot_top_increases(df_history, year_range[0], year_range[1])
+    col_top, col_bot = st.columns(2)
+    with col_top:
+        st.altair_chart(chart_top, use_container_width=True)
+    with col_bot:
+        st.altair_chart(chart_bottom, use_container_width=True)
+else:
+    st.warning("⚠️ Could not load historical rent data.")
 
 st.divider()
 
@@ -278,6 +293,15 @@ filtered["matches"] = mask
 # ──────────────────────────────────────────────
 # KPIs — based only on matching zones
 # ──────────────────────────────────────────────
+
+st.markdown("""
+### Favorable Housing Map
+Explore Paris neighborhoods by rent, commute time or combined score, and find where student life is more or less affordable.
+            
+_You can interact with the sliders and buttons on the left bar to refine your search._\
+_Scoring is detailed at the bottom of the page._\
+""")
+
 matching = filtered[filtered["matches"]]
 col1, col2, col3, col4 = st.columns(4)
 col1.metric("Matching zones", f"{matching['id_quartier'].nunique()}")
@@ -288,7 +312,6 @@ col4.metric(
     f"{matching['commute_minutes'].mean():.0f}" if len(matching) and matching['commute_minutes'].notna().any() else "—",
 )
 
-st.divider()
 
 # ──────────────────────────────────────────────
 # Map
