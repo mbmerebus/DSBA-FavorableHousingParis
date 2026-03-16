@@ -428,19 +428,17 @@ base_map = (
 )
 
 campus_pt = (
-    alt.Chart({"values": [{"lon": CAMPUS_LON, "lat": CAMPUS_LAT}]})
-    .mark_point(color="red", size=120, shape="cross", filled=True)
-    .encode(longitude="lon:Q", latitude="lat:Q", tooltip=alt.value(CAMPUS_NAME))
-)
-
-campus_lbl = (
     alt.Chart({"values": [{"lon": CAMPUS_LON, "lat": CAMPUS_LAT, "name": CAMPUS_NAME}]})
-    .mark_text(dy=-12, fontSize=11, fontWeight="bold", color="black")
-    .encode(longitude="lon:Q", latitude="lat:Q", text="name:N")
+    .mark_point(color="black", size=120, shape="cross", filled=True)
+    .encode(
+        longitude="lon:Q",
+        latitude="lat:Q",
+        tooltip=[alt.Tooltip("name:N", title="Campus")]
+    )
 )
 
 chart = (
-    (base_map + campus_pt + campus_lbl)
+    (base_map + campus_pt)
     .properties(width="container", height=550)
     .project(type="mercator")
 )

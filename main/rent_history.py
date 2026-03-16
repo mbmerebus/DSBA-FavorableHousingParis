@@ -44,7 +44,7 @@ def plot_rent_history(df: pd.DataFrame, quartier_name: str) -> alt.Chart:
         "min": "dashed",
     }
     color_map = {
-        "ref": "#b5956a",
+        "ref": "#2c2116",
         "max": "#c0392b",
         "min": "#27ae60",
     }
@@ -109,9 +109,15 @@ def plot_top_increases(df: pd.DataFrame, top_n: int = 15) -> alt.Chart:
 
     top = merged.nlargest(top_n, "increase_pct").sort_values("increase_pct", ascending=True)
 
-    chart = alt.Chart(top).mark_bar(color="#b5956a").encode(
+    chart = alt.Chart(top).mark_bar().encode(
         x=alt.X("increase_pct:Q", title="Increase (%)"),
-        y=alt.Y("nom_quartier:N", sort="-x", title=""),
+        y=alt.Y("nom_quartier:N", sort=alt.EncodingSortField(field="increase_pct", order="ascending"), title="",
+                axis=alt.Axis(labelLimit=200, labelOverlap=False)),
+        color=alt.Color(
+            "increase_pct:Q",
+            scale=alt.Scale(scheme="redyellowgreen", reverse=True),
+            legend=None
+        ),
         tooltip=[
             alt.Tooltip("nom_quartier:N", title="Neighborhood"),
             alt.Tooltip("ref_first:Q", title="First recorded (€/m²)", format=".1f"),
@@ -120,7 +126,7 @@ def plot_top_increases(df: pd.DataFrame, top_n: int = 15) -> alt.Chart:
         ]
     ).properties(
         width="container",
-        height=400,
+        height=max(400, top_n * 28),  # enough height so all labels show
         title=f"Top {top_n} neighborhoods by rent increase"
     )
 
