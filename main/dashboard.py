@@ -447,13 +447,13 @@ elif map_colour == "Commute time (min)":
         alt.value("#d0d0d0")
     )
 else:
+    # RdYlBu explicit colours: blue=good(0) → yellow → red=bad(1)
     colour_enc = alt.condition(
         "datum.properties.matches",
         alt.Color(
             "properties.combined_score:Q",
             scale=alt.Scale(
-                scheme="RdYlBu",
-                reverse=False,
+                range=["#4393c3", "#92c5de", "#d1e5f0", "#ffffbf", "#fddbc7", "#f4a582", "#d6604d"],
                 domain=[score_domain_min, score_domain_max]
             ),
             legend=alt.Legend(title="Score (0=best)"),
