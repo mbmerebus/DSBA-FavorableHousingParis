@@ -313,7 +313,8 @@ st.markdown("""
 Explore Paris neighborhoods by rent, commute time or combined score, and find where student life is more or less affordable.
             
 _You can interact with the sliders and buttons on the left bar to refine your search._\
-_Scoring is detailed at the bottom of the page._\
+            
+_Scoring is detailed at the bottom of the page._
 """)
 
 matching = filtered[filtered["matches"]]
