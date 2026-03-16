@@ -161,6 +161,17 @@ if sorted_durations:
 else:
     max_commute = None
 
+outside_penalty = st.sidebar.slider(
+    "Commute time weight",
+    min_value=0.5,
+    max_value=3.0,
+    value=1.0,
+    step=0.1,
+    help="1.0 = linear. Higher = slow commutes penalized more. Lower = commute matters less."
+)
+
+
+
 room_types = sorted(paris_zones["piece"].dropna().unique().tolist())
 selected_rooms = st.sidebar.multiselect(
     "Number of rooms",
@@ -249,13 +260,29 @@ else:
 
 if sorted_durations:
     dur_min, dur_max = sorted_durations[0], sorted_durations[-1]
-    map_data["commute_score"] = map_data["commute_minutes"].apply(
+    # Base commute score: 0 (fastest) → 1 (slowest), NaN → 1 (worst reachable)
+    map_data["commute_score_base"] = map_data["commute_minutes"].apply(
         lambda m: 1.0 if pd.isna(m) else (m - dur_min) / (dur_max - dur_min) if dur_max > dur_min else 0
     )
 else:
-    map_data["commute_score"] = 0.0
+    map_data["commute_score_base"] = 1.0
 
-map_data["combined_score"] = ((map_data["rent_score"] + map_data["commute_score"]) / 2).round(3)
+# Apply penalty as a power curve: higher penalty = slower zones punished exponentially more
+# penalty=1.0 → linear, penalty=2.0 → quadratic, penalty=3.0 → cubic
+# Higher penalty = slow zones punished more (power > 1 spreads the distribution)
+map_data["commute_score"] = map_data["commute_score_base"] ** outside_penalty
+
+# Raw combined score
+map_data["combined_score_raw"] = (map_data["rent_score"] + map_data["commute_score"]) / 2
+
+# Normalize to [0, 1] so the full color range is always used
+score_min = map_data["combined_score_raw"].min()
+score_max = map_data["combined_score_raw"].max()
+if score_max > score_min:
+    map_data["combined_score"] = ((map_data["combined_score_raw"] - score_min) / (score_max - score_min)).round(3)
+else:
+    map_data["combined_score"] = 0.0
+
 map_data["ref"] = map_data["ref"].round(1)
 
 # Colour selector
