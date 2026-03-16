@@ -286,14 +286,16 @@ map_data["commute_score"] = map_data["commute_score_base"].apply(
     lambda b: apply_commute_weight(b, commute_weight)
 )
 
-# Combined raw score
+# Combined raw score — not normalized so commute_weight has a visible effect
 map_data["combined_score_raw"] = (map_data["rent_score"] + map_data["commute_score"]) / 2
-
-# Normalize to [0, 1] so the full colour range is always used
-# Ne pas normaliser — garder le score brut pour que le poids ait un effet visible
 map_data["combined_score"] = map_data["combined_score_raw"].round(3)
 
 map_data["ref"] = map_data["ref"].round(1)
+
+# Dynamic colour domain based on actual score range of matching zones only
+matching_scores = map_data.loc[map_data["matches"], "combined_score"]
+score_domain_min = float(matching_scores.min()) if len(matching_scores) else 0.0
+score_domain_max = float(matching_scores.max()) if len(matching_scores) else 1.0
 # ── End scoring ────────────────────────────────────────────────────────────
 
 # Colour selector
@@ -341,7 +343,11 @@ else:
         "datum.properties.matches",
         alt.Color(
             "properties.combined_score:Q",
-            scale=alt.Scale(scheme="redyellowgreen", reverse=True, domain=[0, 1]),
+            scale=alt.Scale(
+                scheme="redyellowgreen",
+                reverse=True,
+                domain=[score_domain_min, score_domain_max]
+            ),
             legend=alt.Legend(title="Score (0=best)"),
         ),
         alt.value("#d0d0d0")
