@@ -403,6 +403,14 @@ map_colour = st.radio(
     horizontal=True,
 )
 
+# Map reading guide
+if map_colour == "Rent (€/m²)":
+    st.caption("Light = affordable. Dark red = expensive. Grey = outside your filters.")
+elif map_colour == "Commute time (min)":
+    st.caption("Light blue = short commute. Dark blue = longer commute. Grey = outside your filters.")
+else:
+    st.caption("Blue = good score (cheap and fast). Red = poor score (expensive or slow). Grey = outside your filters.")
+
 # Build Altair chart
 display_df = map_data.drop(columns=["centroid"], errors="ignore")
 geojson_data = alt.InlineData(
@@ -418,7 +426,7 @@ if map_colour == "Rent (€/m²)":
         "datum.properties.matches",
         alt.Color(
             "properties.ref:Q",
-            scale=alt.Scale(scheme="redyellowgreen", reverse=True),
+            scale=alt.Scale(scheme="orangered", reverse=True),
             legend=alt.Legend(title="Rent (€/m²)"),
         ),
         alt.value("#d0d0d0")
@@ -444,8 +452,8 @@ else:
         alt.Color(
             "properties.combined_score:Q",
             scale=alt.Scale(
-                scheme="redyellowgreen",
-                reverse=True,
+                scheme="RdYlBu",
+                reverse=False,
                 domain=[score_domain_min, score_domain_max]
             ),
             legend=alt.Legend(title="Score (0=best)"),
