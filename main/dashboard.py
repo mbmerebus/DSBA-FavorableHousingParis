@@ -115,7 +115,7 @@ def load_data(campus_slug):
 # ──────────────────────────────────────────────
 # Header
 # ──────────────────────────────────────────────
-st.title("🏠 Paris Student Housing Dashboard")
+st.title("The Cost of Studying: Housing around Paris")
 st.markdown("""
 Paris is one of Europe's most expensive student cities, with reference rents ranging from
 **under 20 €/m²** in outer arrondissements to **over 40 €/m²** in the most central neighborhoods.
