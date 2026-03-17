@@ -63,7 +63,7 @@ def load_data(campus_slug):
 
     paris_zones = gpd.read_file(geodata_path)
     paris_zones["annee"] = pd.to_numeric(paris_zones["annee"], errors="coerce")
-    paris_zones = paris_zones[paris_zones["annee"] >= 2024].copy()
+    paris_zones = paris_zones[paris_zones["annee"] >= 2025].copy()
     paris_zones["centroid"] = paris_zones.to_crs(epsg=3857).centroid.to_crs(epsg=4326)
 
     # Load isochrone polygons
