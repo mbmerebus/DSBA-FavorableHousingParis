@@ -18,7 +18,7 @@ import rent_history as rh
 # Page config
 # ──────────────────────────────────────────────
 st.set_page_config(
-    page_title="Favorable Housing for Student in Paris",
+    page_title="The Cost of Studying: Housing around Paris",
     page_icon="🏠",
     layout="wide",
 )
