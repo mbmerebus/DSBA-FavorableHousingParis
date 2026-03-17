@@ -426,7 +426,7 @@ if map_colour == "Rent (€/m²)":
         "datum.properties.matches",
         alt.Color(
             "properties.ref:Q",
-            scale=alt.Scale(scheme="orangered", reverse=True),
+            scale=alt.Scale(scheme="orangered", reverse=False),
             legend=alt.Legend(title="Rent (€/m²)"),
         ),
         alt.value("#d0d0d0")
